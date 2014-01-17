@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>notifier-cluster</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+    $(document).ready(function() {
+      var socket = io.connect();
+      socket.on('connect', function() {
+        console.log('Connected with socket.io');
+      });
+      socket.on('disconnect', function() {
+        alert('Something is wrong!!!');
+        console.log('Disconnected');
+      });
+
+      socket.on('auth', function() {
+        console.log('Auth ok');
+        $("#login").hide()
+        $("#main").show()
+      });
+
+      socket.on('message', function(message) {
+        console.log(message);
+        var obj = JSON.parse(message);
+        $("#main").append(obj.message + "<br/>")
+      });
+
+      $("#btn-login").click(function(){
+        socket.emit('auth', $("#user-id").val(), $("#pass").val())
+      })
+    })
+    </script>
+    <style>
+    #container{display: none;}
+    </style>
+  </head>
+
+  <body>
+    <div id="login">
+      User-id: <input id="user-id" value="" /><br/>
+      Pass: <input id="pass" value="" /><br/>
+      <input id="btn-login" type="button" value="Login" />
+    </div>
+
+    <div id="main">
+
+    </div>
+  </body>
+</html>
