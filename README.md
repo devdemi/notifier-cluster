@@ -1,20 +1,22 @@
 notifier-cluster
 =========
-users.js - creates 7 users in redis, e.g. key - notifier-user:101 and value - pass1
+_users.js_ - creates 7 users in redis, e.g. key - notifier-user:101 and value - pass1
 
-publish.js - publishes to redis channel to this 7 users some message
+_publish.js_ - publishes to redis channel to this 7 users some message
 
-server.js - start application without clusters.
+_server.js_ - start application without clusters.
 
-server-cluster.js - start application with clusters.
+_server-cluster.js_ - start application with clusters.
 
 
-You can start server.js or server-cluster.js.
+Usage
+-----
+- You can start _server.js_ or _server-cluster.js_.
 
-Open localhost:3000
+- Open localhost:3000
 
-Enter user id and password which created with user.js, e.g 101/pass1
+- Enter user id and password which created with _user.js_, e.g 101/pass1
 
-Publish some messages to channel with publish.js.
+- Publish some messages to channel with _publish.js_.
 
-After that you can see this message in browser. 
+- After that you can see this message in browser. 
