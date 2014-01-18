@@ -1,8 +1,7 @@
 var config = require('./config')
 var cluster = require('cluster');
-var store = new (require('socket.io-clusterhub'))();
 //var numCPUs = require('os').cpus().length;
-var numCPUs = 2;
+var numCPUs = 3;
 
 
 if (cluster.isMaster) {
@@ -17,6 +16,10 @@ if (cluster.isMaster) {
   var server = http.createServer(app);
   var io = require('socket.io').listen(server);
 
+  if (process.pid) {
+    console.log('This process is your pid ' + process.pid);
+  }
+
   app.get('/', function(req, res) {
     res.sendfile(__dirname + '/index.html');
   });
@@ -26,43 +29,42 @@ if (cluster.isMaster) {
   // setup socket.io
   io.configure(function() {
     io.set('log level', config.application.loglevel);
-    io.set('store', store);
   });
 
   var redisClient = require("redis").createClient(config.redis.port, config.redis.host);
   if (config.redis.auth) {
-  	redisClient.auth(config.redis.auth);
+    redisClient.auth(config.redis.auth);
   }
   var subscribe = require("redis").createClient(config.redis.port, config.redis.host);
   if (config.redis.auth) {
     subscribe.auth(config.redis.auth);
   }
 
-  var channelName = 'notifier-message'
-
   // listen for new connections
   io.sockets.on('connection', function(socket) {
-  	socket.once('auth', function(userId, pass) {
-        redisClient.get('notifier-user:' + userId, function (err , reply) {
-	          if (reply){
-	          	console.log('Pass:' + reply);
-              subscribe.subscribe(channelName);
+    socket.once('auth', function(userId, pass) {
+      // get user from redis
+      redisClient.get(config.redis.userPrefix + userId, function (err , reply) {
+            if (reply){
+              console.log('Pass:' + reply);
+              subscribe.subscribe(config.redis.channel);
               socket.userId = userId;
-	          	socket.emit('auth', 'ok');
-	          } else {
+              socket.emit('auth', 'ok');
+            } else {
               console.log('Wrong Pass');
-	          	socket.disconnect();
-	          }
-	      });
-
-        subscribe.on("message", function(channel, message) {
-          var obj = JSON.parse(message);
-          console.log('Chanel[' + channel + '] get message ' + socket.userId + '==' + obj.toUserId)
-          if (socket.userId == obj.toUserId) {
-              console.log('Sent message [' + channel + ']:' + socket.id + ': ' + message)
-              socket.send(message);
-          }
+              socket.disconnect();
+            }
       });
-  	});
+
+      // subscribe to redis channel
+      subscribe.on("message", function(channel, message) {
+        var obj = JSON.parse(message);
+        console.log('Chanel[' + channel + ']:' + socket.id + ':' + process.pid + ':get message ' + socket.userId + '==' + obj.toUserId)
+        if (socket.userId == obj.toUserId) {
+          console.log('Sent message [' + channel + ']:' + socket.id + ': ' + message)
+          socket.send(message);
+        }
+      });
+    });
   });
 }

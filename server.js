@@ -30,7 +30,7 @@ if (config.redis.auth) {
 io.sockets.on('connection', function(socket) {
 	socket.once('auth', function(userId, pass) {
 		// get user from redis
-		redisClient.get('notifier-user:' + userId, function (err , reply) {
+		redisClient.get(config.redis.userPrefix + userId, function (err , reply) {
 		      if (reply){
 		      	console.log('Pass:' + reply);
 		        subscribe.subscribe(config.redis.channel);
@@ -45,7 +45,7 @@ io.sockets.on('connection', function(socket) {
 		// subscribe to redis channel
 		subscribe.on("message", function(channel, message) {
 			var obj = JSON.parse(message);
-			console.log('Chanel[' + channel + '] get message ' + socket.userId + '==' + obj.toUserId)
+			console.log('Chanel[' + channel + ']:' + socket.id + ': get message ' + socket.userId + '==' + obj.toUserId)
 			if (socket.userId == obj.toUserId) {
 				console.log('Sent message [' + channel + ']:' + socket.id + ': ' + message)
 				socket.send(message);
